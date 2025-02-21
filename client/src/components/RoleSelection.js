@@ -1,6 +1,5 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { TractorIcon, StoreIcon, TruckIcon } from './Icons';
 
 function RoleSelection() {
   const navigate = useNavigate();
@@ -11,43 +10,52 @@ function RoleSelection() {
 
   return (
     <div className="role-selection-page">
-      <h1 className="page-title">Choose Your Role</h1>
-      <p className="page-subtitle">
-        Select your role to access personalized features and services
-      </p>
-      
-      <div className="role-cards">
-        <div className="role-card" onClick={() => handleRoleSelect('farmer')}>
-          <div className="role-icon farmer-icon">
-            <TractorIcon />
-          </div>
-          <h2>Farmer</h2>
-          <p>List your crops and connect with buyers</p>
-          <button className="role-button farmer-button">
-            Continue as Farmer
-          </button>
-        </div>
+      <div className="role-content">
+        <h1>Select Your Role</h1>
+        <p>Choose how you want to use KrishiSetu</p>
 
-        <div className="role-card" onClick={() => handleRoleSelect('trader')}>
-          <div className="role-icon trader-icon">
-            <StoreIcon />
+        <div className="role-cards">
+          <div className="role-card farmer" onClick={() => handleRoleSelect('farmer')}>
+            <div className="role-icon">👨‍🌾</div>
+            <div className="role-info">
+              <h3>Farmer</h3>
+              <p>Sell your crops directly to buyers</p>
+              <ul>
+                <li>List your produce</li>
+                <li>Get best market prices</li>
+                <li>Direct buyer connection</li>
+              </ul>
+            </div>
+            <button className="role-btn">Continue as Farmer</button>
           </div>
-          <h2>Trader</h2>
-          <p>Buy crops and manage your inventory</p>
-          <button className="role-button trader-button">
-            Continue as Trader
-          </button>
-        </div>
 
-        <div className="role-card" onClick={() => handleRoleSelect('logistics')}>
-          <div className="role-icon logistics-icon">
-            <TruckIcon />
+          <div className="role-card trader" onClick={() => handleRoleSelect('trader')}>
+            <div className="role-icon">🏪</div>
+            <div className="role-info">
+              <h3>Trader</h3>
+              <p>Buy crops directly from farmers</p>
+              <ul>
+                <li>Browse available crops</li>
+                <li>Competitive prices</li>
+                <li>Quality assurance</li>
+              </ul>
+            </div>
+            <button className="role-btn">Continue as Trader</button>
           </div>
-          <h2>Logistics</h2>
-          <p>Provide transportation services</p>
-          <button className="role-button logistics-button">
-            Continue as Logistics
-          </button>
+
+          <div className="role-card logistics" onClick={() => handleRoleSelect('logistics')}>
+            <div className="role-icon">🚛</div>
+            <div className="role-info">
+              <h3>Logistics Partner</h3>
+              <p>Provide transportation services</p>
+              <ul>
+                <li>Manage deliveries</li>
+                <li>Track shipments</li>
+                <li>Optimize routes</li>
+              </ul>
+            </div>
+            <button className="role-btn">Continue as Logistics Partner</button>
+          </div>
         </div>
       </div>
     </div>

@@ -7,6 +7,8 @@ import Registration from './components/Registration';
 import AdminDashboard from './components/AdminDashboard';
 import RoleDashboard from './components/RoleDashboard';
 import Navbar from './components/Navbar';
+import TrackLogistics from './components/logistics/TrackLogistics';
+import LogisticsRequests from './components/logistics/LogisticsRequests';
 import './App.css';
 
 // Create a layout component for the home page
@@ -102,6 +104,9 @@ function App() {
             <Route path="/auth/register" element={<Registration />} />
             <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/dashboard" element={<RoleDashboard />} />
+            <Route path="/farmer/logistics" element={<TrackLogistics />} />
+            <Route path="/trader/logistics" element={<TrackLogistics />} />
+            <Route path="/logistics/requests" element={<LogisticsRequests />} />
           </Routes>
         </main>
       </div>

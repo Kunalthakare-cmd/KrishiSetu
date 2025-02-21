@@ -1,9 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import MyCrops from './farmer/MyCrops';
+import Inventory from './trader/Inventory';
+import Deliveries from './logistics/Deliveries';
+import CreateSalePost from './farmer/CreateSalePost';
+import ViewSalePosts from './trader/ViewSalePosts';
+import ViewRequests from './trader/ViewRequests';
+import MarketPrices from './farmer/MarketPrices';
+import ViewFarmerRequests from './farmer/ViewFarmerRequests';
+import LogisticsRequests from './logistics/LogisticsRequests';
+import Analytics from './trader/Analytics';
+import ManageSalePosts from './farmer/ManageSalePosts';
 
 function RoleDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const navigate = useNavigate();
+  const [transactions, setTransactions] = useState([]);
   
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem('currentUser'));
@@ -12,104 +24,228 @@ function RoleDashboard() {
   const roleSpecificContent = {
     farmer: {
       stats: [
-        { icon: '🌾', title: 'Active Listings', value: '5' },
-        { icon: '💰', title: 'Total Sales', value: '₹45,000' },
-        { icon: '📦', title: 'Pending Orders', value: '3' },
-        { icon: '🚛', title: 'In Transit', value: '2' }
+        { 
+          icon: '🌾', 
+          title: 'Active Listings', 
+          value: (() => {
+            const crops = JSON.parse(localStorage.getItem('crops') || '[]');
+            return crops.filter(crop => 
+              crop.farmer === currentUser.id && crop.status === 'available'
+            ).length;
+          })()
+        },
+        { 
+          icon: '💰', 
+          title: 'Total Sales', 
+          value: (() => {
+            const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            const total = transactions
+              .filter(t => t.farmerId === currentUser.id && t.type === 'sale')
+              .reduce((sum, t) => sum + t.amount, 0);
+            return `₹${total.toLocaleString()}`;
+          })()
+        },
+        { 
+          icon: '📦', 
+          title: 'Pending Orders', 
+          value: (() => {
+            const requests = JSON.parse(localStorage.getItem('tradeRequests') || '[]');
+            return requests.filter(req => 
+              req.farmerId === currentUser.id && req.status === 'pending'
+            ).length;
+          })()
+        },
+        { 
+          icon: '🚛', 
+          title: 'In Transit', 
+          value: (() => {
+            const deliveries = JSON.parse(localStorage.getItem('deliveries') || '[]');
+            return deliveries.filter(d => 
+              d.farmerId === currentUser.id && d.status === 'in_transit'
+            ).length;
+          })()
+        }
       ],
       actions: [
-        { icon: '➕', title: 'Add New Crop', onClick: () => console.log('Add crop') },
-        { icon: '📊', title: 'View Market Prices', onClick: () => console.log('View prices') },
-        { icon: '📝', title: 'Create Sale Post', onClick: () => console.log('Create post') },
-        { icon: '🤝', title: 'View Requests', onClick: () => console.log('View requests') }
+        { 
+          icon: '➕', 
+          title: 'Add New Crop', 
+          onClick: () => setActiveTab('crops')
+        },
+        { 
+          icon: '📊', 
+          title: 'View Market Prices', 
+          onClick: () => setActiveTab('market')
+        },
+        { 
+          icon: '📝', 
+          title: 'Create Sale Post', 
+          onClick: () => setActiveTab('posts')
+        },
+        { 
+          icon: '📋', 
+          title: 'Manage Posts', 
+          onClick: () => setActiveTab('manage-posts')
+        },
+        { 
+          icon: '🤝', 
+          title: 'View Requests', 
+          onClick: () => setActiveTab('requests')
+        }
       ]
     },
     trader: {
       stats: [
-        { icon: '🏪', title: 'Active Orders', value: '8' },
-        { icon: '💵', title: 'Total Purchase', value: '₹1,25,000' },
-        { icon: '📦', title: 'Inventory Items', value: '12' },
-        { icon: '🤝', title: 'Supplier Network', value: '25' }
+        { 
+          icon: '🏪', 
+          title: 'Active Orders', 
+          value: (() => {
+            const requests = JSON.parse(localStorage.getItem('tradeRequests') || '[]');
+            return requests.filter(req => 
+              req.traderId === currentUser.id && req.status === 'pending'
+            ).length;
+          })()
+        },
+        { 
+          icon: '💵', 
+          title: 'Total Purchase', 
+          value: (() => {
+            const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            const total = transactions
+              .filter(t => t.traderId === currentUser.id && t.type === 'purchase')
+              .reduce((sum, t) => sum + t.amount, 0);
+            return `₹${total.toLocaleString()}`;
+          })()
+        },
+        { 
+          icon: '📦', 
+          title: 'Inventory Items', 
+          value: (() => {
+            const inventory = JSON.parse(localStorage.getItem('inventory') || '[]');
+            return inventory.filter(item => item.traderId === currentUser.id).length;
+          })()
+        },
+        { 
+          icon: '🤝', 
+          title: 'Supplier Network', 
+          value: (() => {
+            const transactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+            const uniqueFarmers = new Set(
+              transactions
+                .filter(t => t.traderId === currentUser.id)
+                .map(t => t.farmerId)
+            );
+            return uniqueFarmers.size;
+          })()
+        }
       ],
       actions: [
-        { icon: '🔍', title: 'Browse Crops', onClick: () => console.log('Browse') },
-        { icon: '📦', title: 'Manage Inventory', onClick: () => console.log('Inventory') },
-        { icon: '📋', title: 'Place Order', onClick: () => console.log('Order') },
-        { icon: '📈', title: 'Analytics', onClick: () => console.log('Analytics') }
+        { icon: '🔍', title: 'Browse Crops', onClick: () => setActiveTab('browse') },
+        { icon: '📦', title: 'Manage Inventory', onClick: () => setActiveTab('inventory') },
+        { icon: '🤝', title: 'View Requests', onClick: () => setActiveTab('requests') },
+        { icon: '📈', title: 'Analytics', onClick: () => setActiveTab('analytics') }
       ]
     },
     logistics: {
       stats: [
-        { icon: '🚛', title: 'Active Deliveries', value: '6' },
+        { 
+          icon: '🚛', 
+          title: 'Active Deliveries', 
+          value: (() => {
+            const requests = JSON.parse(localStorage.getItem('logisticsRequests') || '[]');
+            return requests.filter(req => 
+              req.logisticsProviderId === currentUser.id && 
+              req.status === 'accepted'
+            ).length;
+          })()
+        },
         { icon: '📍', title: 'Total Routes', value: '15' },
         { icon: '⏱️', title: 'Pending Requests', value: '4' },
         { icon: '💰', title: 'Monthly Revenue', value: '₹85,000' }
       ],
       actions: [
-        { icon: '📍', title: 'View Routes', onClick: () => console.log('Routes') },
-        { icon: '🚚', title: 'Vehicle Status', onClick: () => console.log('Status') },
-        { icon: '📋', title: 'New Delivery', onClick: () => console.log('Delivery') },
-        { icon: '📊', title: 'Performance', onClick: () => console.log('Performance') }
+        { icon: '📍', title: 'View Routes', onClick: () => setActiveTab('routes') },
+        { icon: '🚚', title: 'Vehicle Status', onClick: () => setActiveTab('vehicles') },
+        { icon: '📋', title: 'New Delivery', onClick: () => setActiveTab('new-delivery') },
+        { icon: '📊', title: 'Performance', onClick: () => setActiveTab('performance') },
+        { icon: '📋', title: 'View Requests', onClick: () => setActiveTab('requests') }
       ]
     }
   };
 
-  return (
-    <div className="role-dashboard">
-      <aside className="dashboard-sidebar">
-        <div className="user-profile">
-          <div className="user-avatar">
-            {role === 'farmer' ? '👨‍🌾' : role === 'trader' ? '🏪' : '🚛'}
+  // Handle quick actions
+  const handleQuickAction = (action, role) => {
+    switch(action) {
+      case 'Add New Crop':
+        setActiveTab('crops');
+        break;
+      case 'View Market Prices':
+        setActiveTab('market');
+        break;
+      case 'Browse Crops':
+        setActiveTab('browse');
+        break;
+      case 'View Routes':
+        setActiveTab('routes');
+        break;
+      default:
+        setActiveTab('overview');
+    }
+  };
+
+  useEffect(() => {
+    // Load user-specific transactions
+    const storedTransactions = JSON.parse(localStorage.getItem('transactions') || '[]');
+    const userTransactions = storedTransactions.filter(t => t.userId === currentUser.id);
+    setTransactions(userTransactions);
+  }, [currentUser.id]);
+
+  // Render transactions section
+  const renderTransactions = () => {
+    if (transactions.length === 0) {
+      return <p className="no-data">No transactions yet</p>;
+    }
+
+    return (
+      <div className="transactions-grid">
+        {transactions.map((transaction, index) => (
+          <div key={index} className="transaction-card">
+            <p><strong>Date:</strong> {new Date(transaction.date).toLocaleDateString()}</p>
+            <p><strong>Type:</strong> {transaction.type}</p>
+            <p><strong>Amount:</strong> ₹{transaction.amount}</p>
+            <p><strong>Status:</strong> {transaction.status}</p>
           </div>
-          <div className="user-info">
-            <h3>{currentUser?.fullName}</h3>
-            <p>{role?.charAt(0).toUpperCase() + role?.slice(1)}</p>
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="dashboard-container">
+      <aside className="dashboard-sidebar">
+        <div className="sidebar-header">
+          <div className="user-profile">
+            <div className="avatar">
+              {currentUser.fullName.charAt(0)}
+            </div>
+            <div className="user-info">
+              <h3>{currentUser.fullName}</h3>
+              <span className="user-role">{currentUser.role}</span>
+            </div>
           </div>
         </div>
 
-        <nav className="dashboard-nav">
-          <button 
-            className={`nav-item ${activeTab === 'overview' ? 'active' : ''}`}
-            onClick={() => setActiveTab('overview')}
-          >
-            📊 Overview
-          </button>
-          <button 
-            className={`nav-item ${activeTab === 'profile' ? 'active' : ''}`}
-            onClick={() => setActiveTab('profile')}
-          >
-            👤 Profile
-          </button>
-          {role === 'farmer' && (
-            <button 
-              className={`nav-item ${activeTab === 'crops' ? 'active' : ''}`}
-              onClick={() => setActiveTab('crops')}
+        <nav className="sidebar-menu">
+          {roleSpecificContent[role]?.actions.map((action, index) => (
+            <div 
+              key={index}
+              className={`menu-item ${activeTab === action.title.toLowerCase() ? 'active' : ''}`}
+              onClick={() => action.onClick()}
             >
-              🌾 My Crops
-            </button>
-          )}
-          {role === 'trader' && (
-            <button 
-              className={`nav-item ${activeTab === 'inventory' ? 'active' : ''}`}
-              onClick={() => setActiveTab('inventory')}
-            >
-              📦 Inventory
-            </button>
-          )}
-          {role === 'logistics' && (
-            <button 
-              className={`nav-item ${activeTab === 'deliveries' ? 'active' : ''}`}
-              onClick={() => setActiveTab('deliveries')}
-            >
-              🚚 Deliveries
-            </button>
-          )}
-          <button 
-            className={`nav-item ${activeTab === 'transactions' ? 'active' : ''}`}
-            onClick={() => setActiveTab('transactions')}
-          >
-            💰 Transactions
-          </button>
+              <span className="menu-icon">{action.icon}</span>
+              <span>{action.title}</span>
+            </div>
+          ))}
         </nav>
       </aside>
 
@@ -127,32 +263,91 @@ function RoleDashboard() {
           </div>
         </header>
 
-        <div className="dashboard-content">
-          <div className="stats-grid">
-            {roleSpecificContent[role]?.stats.map((stat, index) => (
-              <div key={index} className="stat-card">
-                <div className="stat-icon">{stat.icon}</div>
-                <div className="stat-info">
-                  <h3>{stat.title}</h3>
-                  <p>{stat.value}</p>
+        <div className="stats-grid">
+          {roleSpecificContent[role]?.stats.map((stat, index) => (
+            <div key={index} className="stat-card">
+              <div className="stat-icon">{stat.icon}</div>
+              <div className="stat-value">{stat.value}</div>
+              <div className="stat-title">{stat.title}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="content-card">
+          {activeTab === 'crops' && role === 'farmer' && <MyCrops />}
+
+          {activeTab === 'inventory' && role === 'trader' && <Inventory />}
+
+          {activeTab === 'deliveries' && role === 'logistics' && <Deliveries />}
+
+          {activeTab === 'overview' && (
+            <div className="quick-actions">
+              <h2>Quick Actions</h2>
+              <div className="actions-grid">
+                {roleSpecificContent[role]?.actions.map((action, index) => (
+                  <button 
+                    key={index} 
+                    className="action-card" 
+                    onClick={() => handleQuickAction(action.title, role)}
+                  >
+                    <span className="action-icon">{action.icon}</span>
+                    <span className="action-title">{action.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="profile-section">
+              <div className="profile-card">
+                <h2>Profile Information</h2>
+                <div className="profile-details">
+                  <p><strong>Name:</strong> {currentUser?.fullName}</p>
+                  <p><strong>Email:</strong> {currentUser?.email}</p>
+                  <p><strong>Phone:</strong> {currentUser?.phone}</p>
+                  <p><strong>Role:</strong> {currentUser?.role}</p>
+                  {currentUser?.role === 'farmer' && (
+                    <p><strong>Land Size:</strong> {currentUser?.landSize} acres</p>
+                  )}
+                  {currentUser?.role === 'trader' && (
+                    <p><strong>Business Name:</strong> {currentUser?.businessName}</p>
+                  )}
+                  {currentUser?.role === 'logistics' && (
+                    <>
+                      <p><strong>Company Name:</strong> {currentUser?.companyName}</p>
+                      <p><strong>Fleet Size:</strong> {currentUser?.fleetSize} vehicles</p>
+                    </>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
-
-          <div className="quick-actions">
-            <h2>Quick Actions</h2>
-            <div className="actions-grid">
-              {roleSpecificContent[role]?.actions.map((action, index) => (
-                <button key={index} className="action-card" onClick={action.onClick}>
-                  <span className="action-icon">{action.icon}</span>
-                  <span className="action-title">{action.title}</span>
-                </button>
-              ))}
             </div>
-          </div>
+          )}
 
-          {/* Add more role-specific content based on activeTab */}
+          {activeTab === 'transactions' && (
+            <div className="transactions-section">
+              <div className="section-header">
+                <h2>Transaction History</h2>
+              </div>
+              <div className="transactions-list">
+                {renderTransactions()}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'posts' && role === 'farmer' && <CreateSalePost />}
+          {activeTab === 'browse' && role === 'trader' && <ViewSalePosts />}
+          {activeTab === 'requests' && role === 'trader' && <ViewRequests />}
+
+          {activeTab === 'market' && role === 'farmer' && <MarketPrices />}
+
+          {activeTab === 'requests' && role === 'farmer' && <ViewFarmerRequests />}
+
+          {activeTab === 'requests' && role === 'logistics' && <LogisticsRequests />}
+
+          {activeTab === 'analytics' && role === 'trader' && <Analytics />}
+
+          {activeTab === 'manage-posts' && role === 'farmer' && <ManageSalePosts />}
         </div>
       </main>
     </div>
