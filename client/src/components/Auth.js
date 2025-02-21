@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 function Auth() {
   const [formData, setFormData] = useState({
@@ -21,31 +22,30 @@ function Auth() {
     setError(''); // Clear error when user types
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    // Get users from localStorage
-    const users = JSON.parse(localStorage.getItem('users') || '[]');
-    
-    // Find user with matching email and role
-    const user = users.find(u => u.email === formData.email && u.role === role);
-    
-    if (!user) {
-      setError('No account found with this email for selected role');
-      return;
+
+    try {
+      const response = await axios.post('http://localhost:5000/api/users/login', {
+        email: formData.email,
+        password: formData.password
+      });
+
+      // Check if role matches
+      if (response.data.role !== role) {
+        setError(`You do not have access as a ${role}`);
+        return;
+      }
+
+      // Store token and user details
+      localStorage.setItem('currentUser', JSON.stringify(response.data));
+      localStorage.setItem('authToken', response.data.token);
+
+      // Navigate to dashboard
+      navigate('/dashboard');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Login failed');
     }
-
-    // Check password
-    if (user.password !== formData.password) {
-      setError('Invalid password');
-      return;
-    }
-
-    // Store current user in localStorage
-    localStorage.setItem('currentUser', JSON.stringify(user));
-
-    // Navigate to dashboard
-    navigate('/dashboard');
   };
 
   return (
@@ -132,4 +132,4 @@ function Auth() {
   );
 }
 
-export default Auth; 
+export default Auth;
